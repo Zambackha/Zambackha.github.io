@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MicrowaveGames - Retro Shooter</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        font-family: 'Press Start 2P', cursive;
+        position: relative;
+    }
+    #gameCanvas {
+        display: block;
+        margin: 0 auto;
+        background: url('https://media.istockphoto.com/id/1732963074/sv/foto/starry-night-sky-in-space.jpg?s=612x612&w=0&k=20&c=f3sNF_XBMK6-0nuKcghux42dE0PNdKS4h1CZAm42VnE=') repeat-y; /* background */
+        background-size: cover;
+    }
+    .game-over-text {
+        position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: red;
+        font-size: 48px;
+        text-shadow: 2px 2px #000;
+        text-align: center;
+        white-space: nowrap;
+    }
+    #restartBtn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        display: none;
+        border: none;
+        border-radius: 10px;
+        background-color: #ff4c4c;
+        color: #fff;
+        font-family: 'Press Start 2P', cursive;
+    }
+    #restartBtn:hover {
+        background-color: #ff1a1a;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="480" height="640"></canvas>
+<div id="gameOver" class="game-over-text" style="display:none;"></div>
+<button id="restartBtn">RESTART</button>
+
+<script>
+// -------- Images -----------
+const shipImg = new Image();
+const meteorImg = new Image();
+const bulletImg = new Image();
+
+shipImg.src = 'https://cdn.vectorstock.com/i/1000v/31/71/futuristic-spaceship-taking-off-into-space-vector-47223171.jpg';      // spaceship
+meteorImg.src = 'https://img.freepik.com/free-psd/isolated-dark-grey-asteroid-3d-render-space-rock_191095-85682.jpg?semt=ais_user_personalization&w=740&q=80';    // meteor
+bulletImg.src = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhVF-Hubu8PrkwUyIhBPsJuCshJO0B6YrbIw&s';     // bullet
+
+// -------- Canvas -----------
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// -------- Game Variables --------
+let ship, bullets, meteors, score, gameOver;
+let loopId;
+const failMessages = [
+    "YOU SUCK!",
+    "GAME OVER LOSER!",
+    "TRY AGAIN NERD!",
+    "BETTER LUCK NEXT TIME!",
+    "IS THAT YOUR BEST?"
+];
+
+// -------- Initialize Game --------
+function initGame() {
+    ship = { x: canvas.width/2 - 20, y: canvas.height - 80, w: 40, h: 40 };
+    bullets = [];
+    meteors = [];
+    score = 0;
+    gameOver = false;
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('restartBtn').style.display = 'none';
+    loop();
+}
+
+// -------- Auto Shooting -----------
+let shootInterval = setInterval(() => {
+    if (!gameOver) bullets.push({ x: ship.x + ship.w/2 - 5, y: ship.y });
+}, 300);
+
+// -------- Meteor Spawning -----------
+let meteorInterval = setInterval(() => {
+    if (!gameOver) {
+        meteors.push({
+            x: Math.random() * (canvas.width - 40),
+            y: -40,
+            speed: 2 + Math.random() * 3
+        });
+    }
+}, 800);
+
+// -------- Game Loop -----------
+function update() {
+    if (gameOver) return;
+    
+    // Move bullets
+    bullets.forEach((b, i) => {
+        b.y -= 6;
+        if (b.y < -10) bullets.splice(i, 1);
+    });
+    
+    // Move meteors
+    meteors.forEach((m, i) => {
+        m.y += m.speed;
+        
+        // Collision with ship
+        if (m.x < ship.x + ship.w &&
+            m.x + 40 > ship.x &&
+            m.y < ship.y + ship.h &&
+            m.y + 40 > ship.y) {
+            endGame();
+        }
+        
+        // Remove off-screen meteors
+        if (m.y > canvas.height + 20) meteors.splice(i, 1);
+        
+        // Bullet hits meteor
+        bullets.forEach((b,j) => {
+            if (b.x < m.x + 40 &&
+                b.x + 10 > m.x &&
+                b.y < m.y + 40 &&
+                b.y + 20 > m.y) {
+                meteors.splice(i,1);
+                bullets.splice(j,1);
+                score++;
+            }
+        });
+    });
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw ship
+    ctx.drawImage(shipImg, ship.x, ship.y, ship.w, ship.h);
+    
+    // Draw bullets
+    bullets.forEach(b => ctx.drawImage(bulletImg, b.x, b.y, 10, 20));
+    
+    // Draw meteors
+    meteors.forEach(m => ctx.drawImage(meteorImg, m.x, m.y, 40, 40));
+    
+    // Draw score
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px monospace';
+    ctx.fillText('SCORE: ' + score, 10, 20);
+}
+
+function loop() {
+    update();
+    draw();
+    if (!gameOver) loopId = requestAnimationFrame(loop);
+}
+
+// -------- End Game ---------
+function endGame() {
+    gameOver = true;
+    document.getElementById('gameOver').innerText =
+        failMessages[Math.floor(Math.random() * failMessages.length)];
+    document.getElementById('gameOver').style.display = 'block';
+    document.getElementById('restartBtn').style.display = 'block';
+}
+
+// -------- Mouse Move Ship -----------
+canvas.addEventListener('mousemove', (evt) => {
+    let rect = canvas.getBoundingClientRect();
+    ship.x = evt.clientX - rect.left - ship.w/2;
+});
+
+// -------- Restart Button --------
+document.getElementById('restartBtn').addEventListener('click', () => {
+    cancelAnimationFrame(loopId);
+    initGame();
+});
+
+// -------- Start Game -------
+initGame();
+</script>
+
+</body>
+</html>
