@@ -1,0 +1,117 @@
+/* Reset & basics */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-image: url(https://linqcdn.avbportal.com/images/8976f0e5-cb14-4eb6-9987-adfae0658dad.jpg);
+   
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin: 40px 20px 20px;
+}
+
+header h1 {
+    font-size: 3rem;
+    color: #ffbb00;
+}
+
+header p {
+    font-size: 1.2rem;
+    color: #555;
+}
+
+/* Game menu */
+.game-menu {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    width: 90%;
+    max-width: 1200px;
+}
+
+.game-card {
+    background: #fff;
+    border-radius: 12px;
+    width: 220px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 15px;
+    text-align: center;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.25);
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    padding: 20px;
+    text-align: center;
+    background: rgba(255,255,255,0.2);
+    width: 100%;
+}
+
+/* ==============================
+   RESPONSIVE MEDIA QUERIES
+=============================== */
+
+/* Tablets */
+@media (max-width: 900px) {
+    header h1 {
+        font-size: 2.5rem;
+    }
+
+    header p {
+        font-size: 1rem;
+    }
+
+    .game-card {
+        width: 180px;
+        height: 130px;
+        padding: 10px;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 2rem;
+    }
+
+    header p {
+        font-size: 0.9rem;
+    }
+
+    .game-menu {
+        gap: 15px;
+    }
+
+    .game-card {
+        width: 100%;
+        max-width: 300px;
+        height: 120px;
+        padding: 10px;
+    }
+}
