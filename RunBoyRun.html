@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MicrowaveGames - Endless Runner</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        font-family: 'Press Start 2P', cursive;
+        background: #87ceeb;
+        position: relative;
+    }
+    #gameCanvas {
+        display: block;
+        margin: 0 auto;
+        background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNTA_HMOOO1F3btNoq31FSfmVCsVNDm3mNvQ&s') repeat-x; 
+        background-size: cover;
+    }
+    .game-over-text {
+        position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: red;
+        font-size: 48px;
+        text-shadow: 2px 2px #000;
+        text-align: center;
+        white-space: nowrap;
+    }
+    #restartBtn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        display: none;
+        border: none;
+        border-radius: 10px;
+        background-color: #ff4c4c;
+        color: #fff;
+        font-family: 'Press Start 2P', cursive;
+    }
+    #restartBtn:hover {
+        background-color: #ff1a1a;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<div id="gameOver" class="game-over-text" style="display:none;"></div>
+<button id="restartBtn">RESTART</button>
+
+<script>
+// -------- Images --------
+const playerImg = new Image();
+playerImg.src = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQpPnauylF2pafc4SjFQnLn5Tbjyn2q8W3mw&s'; // player image
+
+const groundImg = new Image();
+groundImg.src = 'https://freepngimg.com/save/54038-ground-hd-png-image-high-quality/1024x210'; // ground image
+
+const obstacleImg = new Image();
+obstacleImg.src = 'https://img.freepik.com/premium-vector/cartoon-square-monster-face_444196-36601.jpg'; // obstacle image
+
+// -------- Canvas --------
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// -------- Game Variables --------
+let player, obstacles, score, gameOver, speed, loopId;
+
+function initGame() {
+    // Adjusted gravity for smoother jumps
+    player = { x: 50, y: 300, w: 50, h: 50, vy: 0, jumpPower: -14, gravity: 0.4, onGround: true };
+    obstacles = [];
+    score = 0;
+    speed = 4;
+    gameOver = false;
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('restartBtn').style.display = 'none';
+    loop();
+}
+
+// -------- Controls --------
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') jump();
+});
+document.addEventListener('click', () => jump());
+
+function jump() {
+    if (player.onGround && !gameOver) {
+        player.vy = player.jumpPower;
+        player.onGround = false;
+    }
+}
+
+// -------- Obstacle Spawning --------
+let obstacleTimer = 0;
+function spawnObstacle() {
+    obstacleTimer++;
+    if (obstacleTimer > 90) {
+        obstacles.push({ x: canvas.width, y: 330, w: 40, h: 40 });
+        obstacleTimer = 0;
+    }
+}
+
+// -------- Game Loop --------
+function update() {
+    if (gameOver) return;
+    
+    // Player physics
+    player.vy += player.gravity;
+    player.y += player.vy;
+    if (player.y >= 300) {
+        player.y = 300;
+        player.vy = 0;
+        player.onGround = true;
+    }
+    
+    // Obstacles
+    spawnObstacle();
+    obstacles.forEach((obs, i) => {
+        obs.x -= speed;
+        // Collision
+        if (obs.x < player.x + player.w &&
+            obs.x + obs.w > player.x &&
+            obs.y < player.y + player.h &&
+            obs.y + obs.h > player.y) {
+            endGame();
+        }
+        if (obs.x + obs.w < 0) {
+            obstacles.splice(i, 1);
+            score++;
+        }
+    });
+    
+    // Increase difficulty gradually
+    if (score % 10 === 0 && score > 0) speed = 4 + Math.floor(score/10);
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Ground
+    ctx.drawImage(groundImg, 0, 350, canvas.width, 50);
+    
+    // Player
+    ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+    
+    // Obstacles
+    obstacles.forEach(obs => ctx.drawImage(obstacleImg, obs.x, obs.y, obs.w, obs.h));
+    
+    // Score
+    ctx.fillStyle = '#fff';
+    ctx.font = '18px monospace';
+    ctx.fillText('SCORE: ' + score, 10, 20);
+}
+
+function loop() {
+    update();
+    draw();
+    if (!gameOver) loopId = requestAnimationFrame(loop);
+}
+
+// -------- End Game ---------
+const failMessages = [
+    "YOU SUCK!",
+    "GAME OVER LOSER!",
+    "TRY AGAIN NERD!",
+    "BETTER LUCK NEXT TIME!",
+    "IS THAT YOUR BEST?"
+];
+function endGame() {
+    gameOver = true;
+    document.getElementById('gameOver').innerText =
+        failMessages[Math.floor(Math.random() * failMessages.length)];
+    document.getElementById('gameOver').style.display = 'block';
+    document.getElementById('restartBtn').style.display = 'block';
+}
+
+// -------- Restart Button --------
+document.getElementById('restartBtn').addEventListener('click', () => {
+    cancelAnimationFrame(loopId);
+    initGame();
+});
+
+// -------- Start Game -------
+initGame();
+</script>
+
+</body>
+</html>
